@@ -1,0 +1,74 @@
+import asyncio
+
+from hard_decisions.engines.base import EngineAnswer
+from hard_decisions.record import read_record
+from hard_decisions.tasks import Task
+
+from decision_averaging import analysis
+from decision_averaging.pooled import PooledEngine, pool
+
+OPTIONS = ["true", "false", "unknown"]
+
+
+def slot(choice, **p):
+    return {"type": "choice", "choice": choice, "probabilities": p}
+
+
+def test_vote_and_mean_can_disagree():
+    answers = [slot("false", true=0.1, false=0.5, unknown=0.4), slot("false", true=0.1, false=0.5, unknown=0.4),
+               slot("unknown", true=0.0, false=0.1, unknown=0.9)]
+    assert pool(answers, OPTIONS, "vote") == "false"
+    assert pool(answers, OPTIONS, "mean") == "unknown"
+
+
+def test_vote_tie_goes_to_higher_mean_probability_then_option_order():
+    answers = [slot("true", true=0.5, false=0.1, unknown=0.4), slot("unknown", true=0.3, false=0.1, unknown=0.6)]
+    assert pool(answers, OPTIONS, "vote") == "unknown"
+    even = [slot("true", true=0.5, false=0.0, unknown=0.5), slot("unknown", true=0.5, false=0.0, unknown=0.5)]
+    assert pool(even, OPTIONS, "vote") == "true"
+
+
+def test_single_slot_is_its_own_answer():
+    one = [slot("false", true=0.4, false=0.35, unknown=0.25)]
+    assert pool(one, OPTIONS, "vote") == "false"      # the engine's own choice, even against its argmax
+    assert pool([slot(None)], OPTIONS, "vote") is None
+
+
+class Echo:
+    name = "echo"
+
+    def __init__(self):
+        self.seen = []
+
+    async def answer(self, text, questions):
+        self.seen.append(dict(questions))
+        return EngineAnswer(answers={n: slot("true", true=0.9, false=0.05, unknown=0.05) for n in questions},
+                            model="echo-1", usage={"input_tokens": 100 * len(questions)})
+
+
+def test_pooled_engine_sends_k_identical_copies():
+    inner = Echo()
+    result = asyncio.run(PooledEngine(inner, 3, "echo-k3").answer("t", {"Decision": {"type": "choice"}}))
+    assert list(inner.seen[0]) == ["Decision_0", "Decision_1", "Decision_2"]
+    assert len({str(q) for q in inner.seen[0].values()}) == 1
+    assert len(result.answers) == 3
+
+
+def test_end_to_end_scoring(tmp_path):
+    import shutil
+    shutil.copytree(analysis.ROOT / "tasks" / "proofwriter-cwa", tmp_path / "tasks" / "proofwriter-cwa")
+    task = Task.load("proofwriter-cwa", root=tmp_path)
+    items = task.load_items()[:20]
+    from hard_decisions import answering
+    for k in (1, 3):
+        for run in (1, 2):
+            asyncio.run(answering.run(PooledEngine(Echo(), k, f"echo-k{k}"), task, items,
+                                      analysis.record_path(f"echo-k{k}", run, task.slug, root=tmp_path)))
+    assert len(read_record(analysis.record_path("echo-k3", 1, task.slug, root=tmp_path))) == 20
+    rows = analysis.analyse(task, root=tmp_path)
+    kinds = {r["kind"] for r in rows}
+    assert {"accuracy", "paired", "retest", "slots", "cost"} <= kinds
+    retest = next(r for r in rows if r["kind"] == "retest" and r["arm"] == "echo-k3")
+    assert retest["agreement"] == 1.0
+    paired = next(r for r in rows if r["kind"] == "paired" and r["axis"] == "overall")
+    assert paired["diff"] == 0.0
