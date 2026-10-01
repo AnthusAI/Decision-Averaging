@@ -28,6 +28,7 @@ from decision_averaging.pooled import ARM, RULES, arm_k, mean_probabilities, poo
 
 ROOT = Path(__file__).resolve().parents[1]
 KINDS = ("k", "perm", "para")
+STUDY_RUNS = (1, 2)   # studies 1 and 2; study 3's runs 3-7 are scored by ``stability``
 ECE_BINS = 15
 
 
@@ -71,7 +72,9 @@ def _quantile(values: List[float], q: float) -> Optional[float]:
 
 def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
     items = {i["id"]: i for i in task.load_items()}
-    found = arms(task.slug, root=root)
+    found = {arm: {r: p for r, p in runs.items() if r in STUDY_RUNS}
+             for arm, runs in arms(task.slug, root=root).items()}
+    found = {arm: runs for arm, runs in found.items() if runs}
     records = {(arm, run): read_by_id(path) for arm, runs in found.items() for run, path in runs.items()}
     out: List[dict] = []
     axes = ("overall", "depth") if all("depth" in i["metadata"] for i in items.values()) else ("overall",)

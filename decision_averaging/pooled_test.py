@@ -103,3 +103,32 @@ def test_arm_names():
             arm_k(bad)
     with pytest.raises(ValueError):
         make_engine("jev-para3", Echo(), ["only one"])
+
+
+def test_multi_rater_ac1_matches_two_rater_ac1_and_rewards_agreement():
+    from decision_averaging.harness.agreement import coefficients
+    from decision_averaging.stability import multi_rater
+    pairs = [("a", "a"), ("a", "b"), ("b", "b"), ("c", "c"), ("a", "a")]
+    two = coefficients(pairs, ["a", "b", "c"])
+    multi = multi_rater([list(p) for p in pairs], ["a", "b", "c"])
+    assert abs(multi["agreement"] - two["agreement"]) < 1e-12 and abs(multi["ac1"] - two["ac1"]) < 1e-12
+    assert multi_rater([["a"] * 5, ["b"] * 5], ["a", "b"])["ac1"] == 1.0
+    assert multi_rater([["a", "a", "a", "a", "b"]], ["a", "b"])["agreement"] == 0.6   # 12 of 20 ordered pairs
+
+
+def test_stability_scores_runs_three_to_seven_only(tmp_path):
+    import shutil
+    from decision_averaging import stability
+    shutil.copytree(analysis.ROOT / "tasks" / "proofwriter-cwa", tmp_path / "tasks" / "proofwriter-cwa")
+    task = Task.load("proofwriter-cwa", root=tmp_path)
+    items = task.load_items()[:10]
+    from decision_averaging.harness import answering
+    for k in (1, 2):
+        for run in (1, 3, 4):
+            asyncio.run(answering.run(PooledEngine(Echo(), k, f"jev-k{k}"), task, items,
+                                      analysis.record_path(f"jev-k{k}", run, task.slug, root=tmp_path)))
+    rows = stability.analyse(task, root=tmp_path)
+    main = [r for r in rows if r["kind"] == "stability"]
+    assert {r["arm"] for r in main} == {"jev-k1", "jev-k2"} and all(r["runs"] == [3, 4] for r in main)
+    assert all(r["ac1"] == 1.0 and r["changed"] == 0 for r in main)
+    assert any(r["kind"] == "stability_paired" and r["ac1_diff"] == 0.0 for r in rows)

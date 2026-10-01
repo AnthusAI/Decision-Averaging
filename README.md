@@ -33,6 +33,9 @@ two runs (OWA: 28 items of 1,800 against 52).
 - **Study 2** ([`docs/preregistration-2.md`](docs/preregistration-2.md)): copies made to differ, still one
   request per item, on ProofWriter OWA and Emotion (`dair-ai/emotion` test split, 2,000 items).
   `jev-perm3` rotates the option order; `jev-para3` uses three wordings from `tasks/<task>/variants.yaml`.
+- **Study 3** ([`docs/preregistration-3.md`](docs/preregistration-3.md)): does pooling more copies make the
+  answer more repeatable? k = 1, 2, 3, 5, 10, 20 identical copies, five fresh runs each (runs 3-7) on both
+  ProofWriter tasks, scored with Gwet's multi-rater AC1 across the runs (`decision_averaging/stability.py`).
 - **Pooling, offline:** `vote` (most slots; ties to the higher mean probability) and `mean` (highest mean
   probability), both scored from the same requests. Every slot's full answer is recorded.
 - **Prior work** and what it predicts: [`docs/prior-art.md`](docs/prior-art.md).
@@ -54,6 +57,7 @@ To send new requests you need a TypeSafe key in the environment (`TYPESAFE_API_K
 da answer 3 proofwriter-owa --run 1                        # price only
 da answer 3 proofwriter-owa --run 1 --confirm --max-requests 1800
 scripts/run_study2.sh                                       # study 2 arms in the preregistered order (price only)
+scripts/run_study3.sh                                       # study 3 runs 3-7 in the preregistered order (price only)
 ```
 
 Emotion's tweet text is not in this repository (as in the sibling projects); `tasks/emotion/items.jsonl` holds

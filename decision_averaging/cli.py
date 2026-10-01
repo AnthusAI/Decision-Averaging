@@ -19,7 +19,7 @@ from decision_averaging.harness import answering
 from decision_averaging.harness.record import append_manifest, read_record
 from decision_averaging.harness.tasks import Task
 
-from decision_averaging import analysis, report
+from decision_averaging import analysis, report, stability
 from decision_averaging.pooled import arm_k, make_engine
 
 ROOT = analysis.ROOT
@@ -119,9 +119,10 @@ def _machine() -> dict:
 
 def cmd_replay(args) -> int:
     for slug in TASKS:
-        path = analysis.replay(Task.load(slug, root=ROOT))
-        if path:
-            print(f"wrote {path.relative_to(ROOT)}")
+        task = Task.load(slug, root=ROOT)
+        for path in (analysis.replay(task), stability.replay(task)):
+            if path:
+                print(f"wrote {path.relative_to(ROOT)}")
     return 0
 
 
@@ -136,7 +137,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     p = sub.add_parser("answer", help="price (default) or run the k-copy arm on a task")
     p.add_argument("arm", type=arm_name, help="3 (= jev-k3), or jev-k<k> / jev-perm<k> / jev-para<k>")
     p.add_argument("task", choices=TASKS)
-    p.add_argument("--run", type=int, required=True, choices=(1, 2))
+    p.add_argument("--run", type=int, required=True, choices=range(1, 8), metavar="1-7",
+                   help="1-2: studies 1 and 2; 3-7: study 3 (stability)")
     p.add_argument("--limit", type=int)
     p.add_argument("--confirm", action="store_true")
     p.add_argument("--max-requests", type=int)
