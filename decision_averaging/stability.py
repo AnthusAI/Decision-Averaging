@@ -1,6 +1,7 @@
 """Study 3: how repeatable is the pooled answer as k grows? Nothing here calls an engine.
 
-Each arm ``jev-k<k>`` is answered in runs 3-7 (``docs/preregistration-3.md``). Treating each run as a rater,
+Each arm ``jev-k<k>`` is answered in runs 3-7 (``docs/preregistration-3.md``) on the 1,000 items per task
+listed in ``tasks/<task>/stability-ids.txt``. Treating each run as a rater,
 this scores, per arm and pooling rule:
 
 - ``agreement`` and ``ac1``: Gwet's multi-rater percent agreement and AC1 across all runs (Gwet 2008), with a
@@ -30,6 +31,7 @@ from decision_averaging.harness.tasks import Task
 from decision_averaging.pooled import RULES, arm_k, mean_probabilities, pool, slots
 
 RUNS = (3, 4, 5, 6, 7)
+IDS_FILE = "stability-ids.txt"   # the 1,000 items per task this study answers (scripts/draw_stability_items.py)
 RESAMPLES, SEED = 1000, 0
 NEAR_TIE = 0.15
 
@@ -68,8 +70,14 @@ def _margin(row: dict) -> Optional[float]:
     return top[0] - top[1]
 
 
+def study_ids(task: Task) -> Optional[set]:
+    path = task.dir / IDS_FILE
+    return set(path.read_text(encoding="utf-8").split()) if path.exists() else None
+
+
 def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
-    items = {i["id"]: i for i in task.load_items()}
+    chosen = study_ids(task)
+    items = {i["id"]: i for i in task.load_items() if chosen is None or i["id"] in chosen}
     found = {arm: {r: p for r, p in runs.items() if r in RUNS} for arm, runs in arms(task.slug, root=root).items()
              if arm.startswith("jev-k")}
     found = {arm: runs for arm, runs in found.items() if len(runs) >= 2}

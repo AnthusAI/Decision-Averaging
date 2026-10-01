@@ -34,8 +34,8 @@ two runs (OWA: 28 items of 1,800 against 52).
   request per item, on ProofWriter OWA and Emotion (`dair-ai/emotion` test split, 2,000 items).
   `jev-perm3` rotates the option order; `jev-para3` uses three wordings from `tasks/<task>/variants.yaml`.
 - **Study 3** ([`docs/preregistration-3.md`](docs/preregistration-3.md)): does pooling more copies make the
-  answer more repeatable? k = 1, 2, 3, 5, 10, 20 identical copies, five fresh runs each (runs 3-7) on both
-  ProofWriter tasks, scored with Gwet's multi-rater AC1 across the runs (`decision_averaging/stability.py`).
+  answer more repeatable? k = 1, 2, 3, 5, 10, 20 identical copies, five fresh runs each (runs 3-7) on 1,000
+  items of each ProofWriter task (`tasks/<task>/stability-ids.txt`), scored with Gwet's multi-rater AC1 across the runs (`decision_averaging/stability.py`).
 - **Pooling, offline:** `vote` (most slots; ties to the higher mean probability) and `mean` (highest mean
   probability), both scored from the same requests. Every slot's full answer is recorded.
 - **Prior work** and what it predicts: [`docs/prior-art.md`](docs/prior-art.md).

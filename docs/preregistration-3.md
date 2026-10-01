@@ -3,6 +3,11 @@
 **Status: Frozen.** Committed before any run of this study answered an item. Studies 1 and 2 are unchanged.
 Scored against these predictions word for word.
 
+**Amendment, 2026-10-01, before any run of this study answered an item:** to halve the number of requests,
+each task uses 1,000 of its 1,800 items instead of all of them. They are drawn by `scripts/draw_stability_items.py`
+in proportion to the full sample's (depth, gold label) groups, seed 0, and listed in
+`tasks/<task>/stability-ids.txt`. Everything else is unchanged; the spend and request lines below are updated.
+
 ## Why
 
 Studies 1 and 2 found that pooling copies in one request leaves accuracy unchanged, and that it raises
@@ -17,7 +22,8 @@ No answer from runs 3-7 on any item.
 
 ## Design (frozen)
 
-- **Tasks:** ProofWriter OWA and CWA, the same 1,800 items per task as studies 1 and 2.
+- **Tasks:** ProofWriter OWA and CWA: 1,000 of the 1,800 items per task used in studies 1 and 2, the same
+  1,000 in every arm and run (see the amendment).
 - **Engine:** Jev (`typesafe-sdk`), model version recorded per row.
 - **Arms:** k = 1, 2, 3, 5, 10, 20 identical copies of the task's question in one request per item
   (`jev-k1` ... `jev-k20`). Every slot's answer is recorded.
@@ -38,8 +44,8 @@ No answer from runs 3-7 on any item.
 - **Secondary:** items whose pooled answer is not identical in all five runs; the share of run pairs that
   disagree; the standard deviation across runs of the pooled probability of each item's most common answer;
   accuracy (mean over runs); input tokens and p50 latency per request.
-- **Spend:** about 161M input tokens, about $6.80 at $42 per billion (dry run: $7.12). 108,000 requests:
-  6 arms × 5 runs × 1,800 items × 2 tasks.
+- **Spend:** about 90M input tokens, about $3.80 at $42 per billion. 60,000 requests: 6 arms × 5 runs ×
+  1,000 items × 2 tasks.
 - **If Jev refuses 20 questions in one request,** the `jev-k20` arm is dropped, the other arms still run, and
   the result says so.
 

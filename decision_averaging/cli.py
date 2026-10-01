@@ -81,7 +81,13 @@ def cmd_answer(args) -> int:
     task = Task.load(args.task, root=ROOT)
     engine = _engine(args.arm, task)
     path = analysis.record_path(engine.name, args.run, task.slug)
-    todo = answering.pending(with_texts(task), path, args.limit)
+    items = with_texts(task)
+    if args.run in stability.RUNS:
+        chosen = stability.study_ids(task)
+        if chosen is None:
+            raise SystemExit(f"study 3 runs need tasks/{task.slug}/{stability.IDS_FILE}")
+        items = [i for i in items if i["id"] in chosen]
+    todo = answering.pending(items, path, args.limit)
     print(f"{engine.name} run {args.run} on {task.slug}: {len(todo)} items still to answer")
     print(f"price: {_price(engine.name, task, todo, read_record(path))}")
     if not args.confirm:
