@@ -5,15 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "decision-averaging"
 version = "0.1.0"
-description = "Does asking a decision model the same question several times in one request, and pooling the answers, make it more accurate or more stable?"
+description = "Does asking a decision model for several classifications of one item in one request, and pooling them, make it more accurate or more stable?"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-# Reuses the Hard-Decisions harness (task loading, answer runner, metrics, AC1): pip install -e ../Hard-Decisions
-dependencies = ["hard-decisions", "pyyaml", "python-dotenv"]
+dependencies = ["pyyaml", "python-dotenv"]
 
 [project.optional-dependencies]
 jev = ["typesafe-sdk"]
+emotion = ["datasets"]
 dev = ["pytest>=8", "pytest-asyncio>=0.23"]
 
 [project.scripts]

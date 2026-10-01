@@ -2,9 +2,9 @@ import asyncio
 
 import pytest
 
-from hard_decisions.engines.base import EngineAnswer
-from hard_decisions.record import read_record
-from hard_decisions.tasks import Task
+from decision_averaging.harness.base import EngineAnswer
+from decision_averaging.harness.record import read_record
+from decision_averaging.harness.tasks import Task
 
 from decision_averaging import analysis
 from decision_averaging.pooled import PooledEngine, arm_k, make_engine, pool, rotations
@@ -61,7 +61,7 @@ def test_end_to_end_scoring(tmp_path):
     shutil.copytree(analysis.ROOT / "tasks" / "proofwriter-cwa", tmp_path / "tasks" / "proofwriter-cwa")
     task = Task.load("proofwriter-cwa", root=tmp_path)
     items = task.load_items()[:20]
-    from hard_decisions import answering
+    from decision_averaging.harness import answering
     for k in (1, 3):
         for run in (1, 2):
             asyncio.run(answering.run(PooledEngine(Echo(), k, f"echo-k{k}"), task, items,

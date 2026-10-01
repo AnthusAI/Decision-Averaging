@@ -18,11 +18,11 @@ import itertools
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from hard_decisions import metrics
-from hard_decisions.agreement import bootstrap_ac1, coefficients
-from hard_decisions.record import read_by_id
-from hard_decisions.scoring import _sort_key, write_rows
-from hard_decisions.tasks import Task
+from decision_averaging.harness import metrics
+from decision_averaging.harness.agreement import bootstrap_ac1, coefficients
+from decision_averaging.harness.record import read_by_id
+from decision_averaging.harness.scoring import _sort_key, write_rows
+from decision_averaging.harness.tasks import Task
 
 from decision_averaging.pooled import ARM, RULES, arm_k, mean_probabilities, pool, slots
 

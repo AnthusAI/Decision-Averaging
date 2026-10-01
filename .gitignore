@@ -4,3 +4,4 @@ __pycache__/
 *.egg-info/
 var/
 .pytest_cache/
+tasks/emotion/texts.jsonl

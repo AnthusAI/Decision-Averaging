@@ -24,7 +24,7 @@ import re
 from collections import Counter
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
-from hard_decisions.engines.base import EngineAnswer
+from decision_averaging.harness.base import EngineAnswer
 
 RULES = ("vote", "mean")
 ARM = re.compile(r"^(?P<engine>[a-z]+)-(?P<kind>k|perm|para)(?P<k>\d+)$")

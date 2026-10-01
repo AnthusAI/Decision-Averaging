@@ -1,7 +1,7 @@
 # Agent instructions: Decision-Averaging
 
 A benchmark of pooling repeated copies of one question in a single decision-model request. Same conventions as
-Hard-Decisions, whose harness it imports.
+Hard-Decisions, whose harness it vendors (`decision_averaging/harness/`).
 
 - **Preregistered:** commit predictions (`docs/preregistration.md`) before any arm answers an item.
 - **Replayable:** `da replay` must reproduce `studies/*.jsonl` byte for byte from `answers/`, offline.

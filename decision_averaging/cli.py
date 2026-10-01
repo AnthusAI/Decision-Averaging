@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import sys
 from typing import List, Optional
 
 import yaml
 
-from hard_decisions import answering
-from hard_decisions.cli import _code_version, _machine
-from hard_decisions.record import append_manifest, read_record
-from hard_decisions.tasks import Task
+from decision_averaging.harness import answering
+from decision_averaging.harness.record import append_manifest, read_record
+from decision_averaging.harness.tasks import Task
 
 from decision_averaging import analysis, report
 from decision_averaging.pooled import arm_k, make_engine
@@ -41,7 +41,7 @@ def wordings(task: Task) -> Optional[List[str]]:
 
 
 def _engine(arm: str, task: Task):
-    from hard_decisions.engines.jev import JevEngine
+    from decision_averaging.harness.jev import JevEngine
     return make_engine(arm, JevEngine(), wordings(task))
 
 
@@ -64,11 +64,24 @@ def _price(arm: str, task: Task, todo: List[dict], recorded: List[dict]) -> str:
     return f"{len(todo)} requests, ~{tokens:,.0f} input tokens, ~${tokens * JEV_USD_PER_INPUT_TOKEN:.4f} ({basis})"
 
 
+def with_texts(task: Task) -> List[dict]:
+    """The task's items with their text. Emotion keeps its text in a gitignored ``texts.jsonl`` beside the
+    committed ids and labels; ``scripts/build_emotion.py`` writes it."""
+    items = task.load_items()
+    if all("text" in i for i in items):
+        return items
+    path = task.dir / "texts.jsonl"
+    if not path.exists():
+        raise SystemExit(f"{task.slug} has no text in this checkout; run scripts/build_emotion.py first")
+    texts = {r["id"]: r["text"] for r in map(json.loads, path.read_text(encoding="utf-8").splitlines()) if r}
+    return [{**i, "text": texts[i["id"]]} for i in items]
+
+
 def cmd_answer(args) -> int:
     task = Task.load(args.task, root=ROOT)
     engine = _engine(args.arm, task)
     path = analysis.record_path(engine.name, args.run, task.slug)
-    todo = answering.pending(task.load_items(), path, args.limit)
+    todo = answering.pending(with_texts(task), path, args.limit)
     print(f"{engine.name} run {args.run} on {task.slug}: {len(todo)} items still to answer")
     print(f"price: {_price(engine.name, task, todo, read_record(path))}")
     if not args.confirm:
@@ -90,8 +103,18 @@ def cmd_answer(args) -> int:
 def _code_version_here() -> dict:
     import subprocess
     run = lambda *a: subprocess.run(["git", "-C", str(ROOT), *a], capture_output=True, text=True).stdout.strip()  # noqa: E731
-    return {"commit": run("rev-parse", "HEAD"), "dirty": bool(run("status", "--porcelain", "--untracked-files=no")),
-            "hard_decisions": _code_version()}
+    return {"commit": run("rev-parse", "HEAD"), "dirty": bool(run("status", "--porcelain", "--untracked-files=no"))}
+
+
+def _machine() -> dict:
+    import platform
+    import subprocess
+    info = {"platform": platform.platform(), "python": platform.python_version()}
+    if sys.platform == "darwin":
+        for key, name in (("model", "hw.model"), ("cpu", "machdep.cpu.brand_string"), ("memory_bytes", "hw.memsize")):
+            out = subprocess.run(["sysctl", "-n", name], capture_output=True, text=True).stdout.strip()
+            info[key] = int(out) if key == "memory_bytes" and out.isdigit() else out
+    return info
 
 
 def cmd_replay(args) -> int:
