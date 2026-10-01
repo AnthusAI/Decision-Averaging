@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 from typing import List
 
-from decision_averaging.analysis import ROOT
+from decision_averaging.analysis import ROOT, arm_order
 
-TASKS = ("proofwriter-owa", "proofwriter-cwa")
+TASKS = ("proofwriter-owa", "proofwriter-cwa", "emotion")
 
 
 def _pct(x) -> str:
@@ -23,7 +23,7 @@ def task_section(slug: str, rows: List[dict]) -> List[str]:
     acc = [r for r in rows if r["kind"] == "accuracy"]
     if not acc:
         return lines + ["No arm has been answered on this task yet.", ""]
-    arms = sorted({r["arm"] for r in acc}, key=lambda a: int(a.rsplit("-k", 1)[1]))
+    arms = sorted({r["arm"] for r in acc}, key=arm_order)
     runs = sorted({r["run"] for r in acc})
     lines += ["### Accuracy (95% bootstrap interval)", "",
               "| arm | rule | " + " | ".join(f"run {r}" for r in runs) + " |", "|---|---|" + "---|" * len(runs)]
@@ -35,16 +35,24 @@ def task_section(slug: str, rows: List[dict]) -> List[str]:
                           and r["axis"] == "overall"), None)
                 cells.append("-" if m is None else f"{_pct(m['accuracy'])} [{_pct(m['ci_low'])}-{_pct(m['ci_high'])}]")
             lines.append(f"| {arm} | {'-' if arm.endswith('-k1') else rule} | " + " | ".join(cells) + " |")
+    scored = [r for r in acc if r["axis"] == "overall" and r["rule"] == "mean"]
+    lines += ["", "### Macro-F1 and probability scores (`mean` rule; Brier summed over options, ECE 15 bins)", "",
+              "| arm | run | macro-F1 | Brier | ECE |", "|---|---|---|---|---|"]
+    for r in scored:
+        lines.append(f"| {r['arm']} | {r['run']} | {r['macro_f1']:.3f} | "
+                     f"{'-' if r.get('brier') is None else format(r['brier'], '.3f')} | "
+                     f"{'-' if r.get('ece') is None else format(r['ece'], '.3f')} |")
     depths = sorted({r["value"] for r in acc if r["axis"] == "depth"}, key=int)
-    lines += ["", "### Accuracy by proof depth (run 1; `vote` for k > 1, the `mean` rule is in the studies file)", "",
-              "| depth | " + " | ".join(arms) + " |", "|---|" + "---|" * len(arms)]
-    for d in depths:
-        cells = []
-        for arm in arms:
-            m = next((r for r in acc if r["arm"] == arm and r["rule"] == "vote" and r["run"] == 1
-                      and r["axis"] == "depth" and r["value"] == d), None)
-            cells.append("-" if m is None else _pct(m["accuracy"]))
-        lines.append(f"| {d} | " + " | ".join(cells) + " |")
+    if depths:
+        lines += ["", "### Accuracy by proof depth (run 1; `vote` for k > 1, the `mean` rule is in the studies file)", "",
+                  "| depth | " + " | ".join(arms) + " |", "|---|" + "---|" * len(arms)]
+        for d in depths:
+            cells = []
+            for arm in arms:
+                m = next((r for r in acc if r["arm"] == arm and r["rule"] == "vote" and r["run"] == 1
+                          and r["axis"] == "depth" and r["value"] == d), None)
+                cells.append("-" if m is None else _pct(m["accuracy"]))
+            lines.append(f"| {d} | " + " | ".join(cells) + " |")
     paired = [r for r in rows if r["kind"] == "paired" and r["axis"] == "overall"]
     if paired:
         lines += ["", "### Against one copy (same items, same run; accuracy difference in points)", "",
@@ -65,10 +73,11 @@ def task_section(slug: str, rows: List[dict]) -> List[str]:
                   "Pairwise disagreement: share of slot pairs in one request with different answers. Across runs: "
                   "share of slots whose answer differs between run 1 and run 2 (separate requests).", "",
                   "| arm | run | pairwise disagreement | requests with a split vote | mean probability range | "
-                  "same slot across runs |", "|---|---|---|---|---|---|"]
+                  "any slot right | same slot across runs |", "|---|---|---|---|---|---|---|"]
         for r in slot_rows:
             lines.append(f"| {r['arm']} | {r['run']} | {_pct(r.get('pairwise_disagreement'))} | "
                          f"{_pct(r.get('split_requests'))} | {_pct(r.get('mean_probability_range'))} | "
+                         f"{_pct(r.get('any_slot_right'))} | "
                          f"{_pct(r.get('same_slot_disagreement_across_runs'))} |")
     cost = [r for r in rows if r["kind"] == "cost"]
     if cost:

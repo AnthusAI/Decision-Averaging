@@ -1,11 +1,13 @@
 import asyncio
 
+import pytest
+
 from hard_decisions.engines.base import EngineAnswer
 from hard_decisions.record import read_record
 from hard_decisions.tasks import Task
 
 from decision_averaging import analysis
-from decision_averaging.pooled import PooledEngine, pool
+from decision_averaging.pooled import PooledEngine, arm_k, make_engine, pool, rotations
 
 OPTIONS = ["true", "false", "unknown"]
 
@@ -72,3 +74,40 @@ def test_end_to_end_scoring(tmp_path):
     assert retest["agreement"] == 1.0
     paired = next(r for r in rows if r["kind"] == "paired" and r["axis"] == "overall")
     assert paired["diff"] == 0.0
+
+
+QUESTION = {"type": "choice", "instructions": "Q?", "criteria": {"a": "A", "b": "B", "c": "C", "d": "D",
+                                                                  "e": "E", "f": "F"}}
+
+
+def test_rotations_space_shifts_evenly_and_keep_descriptions():
+    versions = rotations(3)(QUESTION)
+    assert [list(v["criteria"])[0] for v in versions] == ["a", "c", "e"]
+    assert all(v["criteria"] == QUESTION["criteria"] for v in versions)   # same option -> description pairs
+    three = {**QUESTION, "criteria": {"t": 1, "f": 2, "u": 3}}
+    assert [list(v["criteria"]) for v in rotations(3)(three)] == [["t", "f", "u"], ["f", "u", "t"], ["u", "t", "f"]]
+
+
+def test_paraphrase_arm_sends_each_wording_once_in_one_request():
+    inner = Echo()
+    engine = make_engine("echo-para3", inner, ["one", "two", "three", "unused"])
+    asyncio.run(engine.answer("t", {"Decision": QUESTION}))
+    assert len(inner.seen) == 1
+    assert [q["instructions"] for q in inner.seen[0].values()] == ["one", "two", "three"]
+
+
+def test_separate_arm_sends_k_requests_and_records_k_slots():
+    inner = Echo()
+    result = asyncio.run(make_engine("echo-sep3", inner).answer("t", {"Decision": QUESTION}))
+    assert [list(q) for q in inner.seen] == [["Decision"]] * 3
+    assert list(result.answers) == ["Decision_0", "Decision_1", "Decision_2"]
+    assert result.usage == {"input_tokens": 300}
+
+
+def test_arm_names():
+    assert arm_k("jev-k10") == 10 and arm_k("jev-perm3") == 3
+    for bad in ("jev-3", "jev-vote3", "k3"):
+        with pytest.raises(ValueError):
+            arm_k(bad)
+    with pytest.raises(ValueError):
+        make_engine("jev-para3", Echo(), ["only one"])

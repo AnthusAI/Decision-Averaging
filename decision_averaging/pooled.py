@@ -9,35 +9,113 @@ applied afterwards, offline, so every rule is scored from the same requests:
 - ``mean``: the option with the highest mean probability across slots; a tie goes to option order.
 
 With ``k = 1`` both rules return the single slot's choice.
+
+Preregistration 2 adds arms whose slots differ (``make_engine`` builds each from its arm name):
+
+- ``jev-perm<k>``: one request, the options in ``k`` cyclic rotations of the task's order.
+- ``jev-para<k>``: one request, ``k`` question wordings from ``tasks/<task>/variants.yaml``.
+- ``jev-sep<k>``: ``k`` separate one-question requests, recorded as the slots of one row.
+
+Probabilities are keyed by option name, so pooling needs no remapping after a rotation.
 """
 from __future__ import annotations
 
+import asyncio
+import re
 from collections import Counter
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 from hard_decisions.engines.base import EngineAnswer
 
 RULES = ("vote", "mean")
+ARM = re.compile(r"^(?P<engine>[a-z]+)-(?P<kind>k|perm|para|sep)(?P<k>\d+)$")
+Variants = Callable[[Mapping[str, Any]], List[Mapping[str, Any]]]
 
 
 def slot_names(k: int) -> List[str]:
     return [f"Decision_{i}" for i in range(k)]
 
 
-class PooledEngine:
-    """Wraps any Hard-Decisions engine; ``k`` copies of the one task question per request."""
+def identical(k: int) -> Variants:
+    return lambda question: [question] * k
 
-    def __init__(self, inner, k: int, name: str):
+
+def rotations(k: int) -> Variants:
+    """``k`` cyclic rotations of the option order, evenly spaced: shifts 0, n/k, 2n/k, ... for n options."""
+    def build(question: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+        options = list(question["criteria"])
+        if k > len(options):
+            raise ValueError(f"{k} rotations need at least {k} options")
+        out = []
+        for i in range(k):
+            shift = i * len(options) // k
+            order = options[shift:] + options[:shift]
+            out.append({**question, "criteria": {o: question["criteria"][o] for o in order}})
+        return out
+    return build
+
+
+def paraphrases(wordings: Sequence[str]) -> Variants:
+    return lambda question: [{**question, "instructions": text} for text in wordings]
+
+
+class PooledEngine:
+    """Wraps any Hard-Decisions engine; one request carrying ``k`` versions of the task question."""
+
+    def __init__(self, inner, k: int, name: str, variants: Optional[Variants] = None):
         if k < 1:
             raise ValueError("k must be at least 1")
         self.inner, self.k, self.name = inner, k, name
+        self.variants = variants or identical(k)
 
-    async def answer(self, text: str, questions: Mapping[str, Mapping[str, Any]]) -> EngineAnswer:
+    def _versions(self, questions: Mapping[str, Mapping[str, Any]]) -> List[Mapping[str, Any]]:
         if len(questions) != 1:
             raise ValueError("a pooled request repeats exactly one question")
-        question = next(iter(questions.values()))
-        result = await self.inner.answer(text, {name: question for name in slot_names(self.k)})
+        versions = self.variants(next(iter(questions.values())))
+        if len(versions) != self.k:
+            raise ValueError(f"{self.name} expects {self.k} versions, got {len(versions)}")
+        return versions
+
+    async def answer(self, text: str, questions: Mapping[str, Mapping[str, Any]]) -> EngineAnswer:
+        versions = self._versions(questions)
+        result = await self.inner.answer(text, dict(zip(slot_names(self.k), versions)))
         return EngineAnswer(answers=result.answers, model=result.model, usage=result.usage)
+
+
+class SeparateEngine(PooledEngine):
+    """``k`` separate requests of one question each, recorded as slots of one row (usage summed)."""
+
+    async def answer(self, text: str, questions: Mapping[str, Mapping[str, Any]]) -> EngineAnswer:
+        versions = self._versions(questions)
+        results = await asyncio.gather(*(self.inner.answer(text, {"Decision": q}) for q in versions))
+        answers = {name: next(iter(r.answers.values())) for name, r in zip(slot_names(self.k), results)}
+        usage: Dict[str, int] = {}
+        for r in results:
+            for key, value in (r.usage or {}).items():
+                if isinstance(value, (int, float)):
+                    usage[key] = usage.get(key, 0) + value
+        return EngineAnswer(answers=answers, model=results[0].model, usage=usage or None)
+
+
+def arm_k(arm: str) -> int:
+    match = ARM.match(arm)
+    if not match:
+        raise ValueError(f"unknown arm {arm!r}; expected e.g. jev-k3, jev-perm3, jev-para3, jev-sep3")
+    return int(match["k"])
+
+
+def make_engine(arm: str, inner, wordings: Optional[Sequence[str]] = None) -> PooledEngine:
+    """The engine for an arm name. ``wordings`` (the task's ``variants.yaml``) is needed for ``para``."""
+    k, kind = arm_k(arm), ARM.match(arm)["kind"]
+    if kind == "k":
+        return PooledEngine(inner, k, arm)
+    if kind == "perm":
+        return PooledEngine(inner, k, arm, rotations(k))
+    if kind == "para":
+        if not wordings or len(wordings) < k:
+            raise ValueError(f"{arm} needs at least {k} wordings in the task's variants.yaml")
+        return PooledEngine(inner, k, arm, paraphrases(list(wordings)[:k]))
+    return SeparateEngine(inner, k, arm)
 
 
 def slots(row: Mapping[str, Any]) -> List[dict]:

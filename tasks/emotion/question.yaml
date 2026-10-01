@@ -1,0 +1,10 @@
+semantics: emotion
+question: "What is the primary emotion the writer expresses in the text?"
+options: ["sadness", "joy", "love", "anger", "fear", "surprise"]
+descriptions:
+  "sadness": "The writer mainly expresses sadness."
+  "joy": "The writer mainly expresses joy."
+  "love": "The writer mainly expresses love."
+  "anger": "The writer mainly expresses anger."
+  "fear": "The writer mainly expresses fear."
+  "surprise": "The writer mainly expresses surprise."

@@ -18,6 +18,15 @@ two options are that close. Jev bills input tokens only, and each extra copy of 
 - **Two runs per arm**, for test-retest agreement (Gwet's AC1) and for comparing variation within one request
   against variation between requests.
 
+Study 2 (`docs/preregistration-2.md`) asks whether copies that are made to differ do better, on ProofWriter OWA
+and on Emotion (`dair-ai/emotion` test split, 2,000 items):
+
+- `jev-sep3`: three separate one-question requests.
+- `jev-perm3`: one request, options in three rotations of the task's order.
+- `jev-para3`: one request, three wordings from `tasks/<task>/variants.yaml`.
+
+Prior work and what it predicts is in `docs/prior-art.md`.
+
 ## Run notes
 
 - Run 1 began with a 20-item `jev-k10` OWA pilot, answered before the `jev-k1` arm and so out of the
@@ -32,6 +41,7 @@ two options are that close. Jev bills input tokens only, and each extra copy of 
 make install                                        # installs ../Hard-Decisions too; the harness is shared
 da answer 3 proofwriter-owa --run 1                 # dry run: prints the price, sends nothing
 da answer 3 proofwriter-owa --run 1 --confirm --max-requests 1800
+da answer jev-perm3 emotion --run 1                 # study 2 arms: jev-sep3, jev-perm3, jev-para3
 da replay && da report                              # rescore from the records, write RESULTS.md
 ```
 
@@ -39,7 +49,7 @@ da replay && da report                              # rescore from the records, 
 
 ```
 decision_averaging/   pooled engine and rules, analysis, report, CLI (reuses hard_decisions)
-tasks/                the ProofWriter samples, copied from Hard-Decisions
+tasks/                the ProofWriter samples (copied from Hard-Decisions) and Emotion (scripts/build_emotion.py)
 answers/<arm>/run<r>/<task>.jsonl.gz   committed records; <task>.runs.jsonl beside each is the run manifest
 studies/<task>.jsonl  scored rows;  RESULTS.md is generated from them
 docs/preregistration.md
