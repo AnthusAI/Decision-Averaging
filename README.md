@@ -18,6 +18,14 @@ two options are that close. Jev bills input tokens only, and each extra copy of 
 - **Two runs per arm**, for test-retest agreement (Gwet's AC1) and for comparing variation within one request
   against variation between requests.
 
+## Run notes
+
+- Run 1 began with a 20-item `jev-k10` OWA pilot, answered before the `jev-k1` arm and so out of the
+  preregistered k = 1, 3, 5, 10 order. Those rows are kept; the rest of run 1 followed the order.
+- Run 2 was stopped at 1,162 of 1,800 `jev-k10` OWA items and later resumed, so its manifest has more than one
+  line.
+- The Jev key is not read from this repo: the imported Hard-Decisions engine loads `../Hard-Decisions/.env`.
+
 ## Quickstart
 
 ```
