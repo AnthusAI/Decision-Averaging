@@ -18,10 +18,9 @@ two options are that close. Jev bills input tokens only, and each extra copy of 
 - **Two runs per arm**, for test-retest agreement (Gwet's AC1) and for comparing variation within one request
   against variation between requests.
 
-Study 2 (`docs/preregistration-2.md`) asks whether copies that are made to differ do better, on ProofWriter OWA
+Study 2 (`docs/preregistration-2.md`) asks whether copies in one request that are made to differ do better, on ProofWriter OWA
 and on Emotion (`dair-ai/emotion` test split, 2,000 items):
 
-- `jev-sep3`: three separate one-question requests.
 - `jev-perm3`: one request, options in three rotations of the task's order.
 - `jev-para3`: one request, three wordings from `tasks/<task>/variants.yaml`.
 
@@ -41,7 +40,7 @@ Prior work and what it predicts is in `docs/prior-art.md`.
 make install                                        # installs ../Hard-Decisions too; the harness is shared
 da answer 3 proofwriter-owa --run 1                 # dry run: prints the price, sends nothing
 da answer 3 proofwriter-owa --run 1 --confirm --max-requests 1800
-da answer jev-perm3 emotion --run 1                 # study 2 arms: jev-sep3, jev-perm3, jev-para3
+da answer jev-perm3 emotion --run 1                 # study 2 arms: jev-perm3, jev-para3
 da replay && da report                              # rescore from the records, write RESULTS.md
 ```
 

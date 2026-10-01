@@ -96,17 +96,9 @@ def test_paraphrase_arm_sends_each_wording_once_in_one_request():
     assert [q["instructions"] for q in inner.seen[0].values()] == ["one", "two", "three"]
 
 
-def test_separate_arm_sends_k_requests_and_records_k_slots():
-    inner = Echo()
-    result = asyncio.run(make_engine("echo-sep3", inner).answer("t", {"Decision": QUESTION}))
-    assert [list(q) for q in inner.seen] == [["Decision"]] * 3
-    assert list(result.answers) == ["Decision_0", "Decision_1", "Decision_2"]
-    assert result.usage == {"input_tokens": 300}
-
-
 def test_arm_names():
     assert arm_k("jev-k10") == 10 and arm_k("jev-perm3") == 3
-    for bad in ("jev-3", "jev-vote3", "k3"):
+    for bad in ("jev-3", "jev-vote3", "jev-sep3", "k3"):
         with pytest.raises(ValueError):
             arm_k(bad)
     with pytest.raises(ValueError):

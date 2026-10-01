@@ -27,7 +27,7 @@ from hard_decisions.tasks import Task
 from decision_averaging.pooled import ARM, RULES, arm_k, mean_probabilities, pool, slots
 
 ROOT = Path(__file__).resolve().parents[1]
-KINDS = ("k", "sep", "perm", "para")
+KINDS = ("k", "perm", "para")
 ECE_BINS = 15
 
 

@@ -3,13 +3,18 @@
 **Status: Frozen.** Committed before any arm below answered an item. Study 1 (`docs/preregistration.md`) is
 unchanged. Scored against these predictions word for word.
 
+**Amendment, 2026-10-01, before any arm answered an item:** the `jev-sep3` arm (three separate requests per
+item) is withdrawn. This project measures several classifications in one request; three requests per item is a
+different method. Variation between separate requests is already measured by study 1 (the same slot in run 1
+against run 2). Prediction 4, which concerned that arm, is withdrawn; the other predictions keep their numbers.
+
 ## Why a second study
 
 Study 1 run 1 found that identical copies in one request almost always agree. Copies differ on 2–4% of items
 while 10–16% of answers are wrong, and pooling leaves accuracy within about ±0.6 points of k = 1. Even always
 picking a right slot when one exists would reach only 85.3–85.9% on OWA (k = 1: 84.2%). Prior art
-(`docs/prior-art.md`) says gains need members that make different mistakes. This study gives Jev three ways to
-disagree with itself and asks whether any of them buys accuracy.
+(`docs/prior-art.md`) says gains need members that make different mistakes. This study gives Jev two ways to
+disagree with itself inside one request and asks whether either buys accuracy.
 
 ## Information used to write this, stated in advance
 
@@ -30,16 +35,15 @@ disagree with itself and asks whether any of them buys accuracy.
 - **Engine:** Jev (`typesafe-sdk`), model version recorded per row.
 - **Baselines:** on ProofWriter, study 1's `jev-k1` and `jev-k3` run 1. On Emotion, new `jev-k1` and `jev-k3`
   (identical copies).
-- **Arms, three answers pooled per item:**
-  - `jev-sep3`: three separate requests, one identical question each, sent concurrently.
+- **Arms, three answers pooled per item, all from one request:**
   - `jev-perm3`: one request, three copies with the options in cyclic rotations of the task's order (OWA shifts
     0, 1, 2; Emotion shifts 0, 2, 4). Each option keeps its own description.
   - `jev-para3`: one request, the three wordings in `tasks/<task>/variants.yaml`. Wording 0 is the task's own
     question; options and descriptions are unchanged. The wordings were written once and have not been tried.
 - **Pooling:** `vote` and `mean`, offline, as in study 1.
-- **One run per arm**, recorded as run 1. Order fixed by `random.Random(0).shuffle` over the eight cells:
-  emotion `jev-k3`, OWA `jev-perm3`, emotion `jev-sep3`, OWA `jev-para3`, OWA `jev-sep3`, emotion `jev-k1`,
-  emotion `jev-para3`, emotion `jev-perm3`. Four requests at a time.
+- **One run per arm**, recorded as run 1. Order: the `random.Random(0).shuffle` order of the original eight
+  cells with the withdrawn `jev-sep3` cells removed: emotion `jev-k3`, OWA `jev-perm3`, OWA `jev-para3`,
+  emotion `jev-k1`, emotion `jev-para3`, emotion `jev-perm3`. Four requests at a time.
 - **Primary metric:** accuracy of each varied arm under `mean` against `jev-k1`, paired on the same items, with a
   95% percentile bootstrap interval (seed 0, 1,000 resamples). On Emotion, macro-F1 is reported beside it.
 - **Secondary:**
@@ -48,7 +52,7 @@ disagree with itself and asks whether any of them buys accuracy.
   - Brier score and ECE (15 bins) of the `mean`-pooled probabilities.
   - Input tokens per item.
   - The same results split by `jev-k1` top-two margin (below 0.15, 0.15 or above), computed offline.
-- **Spend:** about $0.72 for all eight cells at $42 per billion input tokens (dry-run estimate; Emotion estimates
+- **Spend:** about $0.44 for all six cells at $42 per billion input tokens (dry-run estimate; Emotion estimates
   are conservative). Every `da answer` call is capped with `--max-requests`.
 
 ## Predictions
@@ -59,7 +63,7 @@ disagree with itself and asks whether any of them buys accuracy.
    under `mean`.
 3. On Emotion, no varied arm raises accuracy against `jev-k1` by 2 points or more under `mean`. Most errors are
    confident, so pooling can reach few of them.
-4. `jev-sep3` behaves like `jev-k3`: accuracy within 1 point, and split-answer share within a factor of 2.
+4. *(Withdrawn with the `jev-sep3` arm.)*
 5. Wherever an arm changes accuracy, most of the changed items (more than half) have a `jev-k1` top-two margin
    below 0.15.
 6. Under `mean`, every varied arm's Brier score is no worse than `jev-k1`'s by more than 0.01.
