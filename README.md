@@ -67,6 +67,9 @@ writes the text to a gitignored `tasks/emotion/texts.jsonl` before answering.
 - Study 1 run 2 was stopped at 1,162 of 1,800 `jev-k10` OWA items and resumed later, so that manifest has more
   than one line.
 - Study 2 withdrew a three-separate-requests arm before any arm answered (see its amendment).
+- Before publishing, history was rewritten to remove Emotion text from earlier commits. Run manifests that name
+  commit `bd2b213` refer to what is now `112aa87` (same code); `0139dd1` is unchanged. Preregistration 2 was
+  frozen in `8b769b8`, before any of its arms answered.
 
 ## Layout
 
