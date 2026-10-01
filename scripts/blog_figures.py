@@ -133,23 +133,33 @@ def close_calls():
     save(fig, "jev-pooled-close-calls.png")
 
 
+USD_PER_INPUT_TOKEN = 42 / 1e9   # TypeSafe's published Jev price; output tokens are free
+
+
 def cost():
     fig, ax = frame()
     for task, (label, _) in TASKS.items():
         rows, spend = rows_by_k(task), rows_by_k(task, "stability_cost")
-        x = [spend[k]["input_tokens_mean"] for k in KS]
+        x = [spend[k]["input_tokens_mean"] * USD_PER_INPUT_TOKEN * 1e6 for k in KS]
         y = [100 * rows[k]["pair_flip_rate"] for k in KS]
         ax.plot(x, y, color=SERIES[label], lw=3, marker="o", ms=10, mec=SURFACE, mew=2.5, label=label)
         if label == "OWA":
             for k, xi, yi in zip(KS, x, y):
-                ax.annotate(f"k={k}", (xi, yi), xytext=(0, 12), textcoords="offset points", ha="center",
+                if k == 2:
+                    continue
+                below = k == 3
+                ax.annotate(f"{k} {'copy' if k == 1 else 'copies'}", (xi, yi), xytext=(4 if below else 0,
+                            -22 if below else 12), textcoords="offset points", ha="left" if below else "center",
                             color=INK_2, fontsize=11)
+    ax.set_xlim(0, 175)
+    ax.set_xticks([0, 25, 50, 75, 100, 125, 150, 175], ["$0", "$25", "$50", "$75", "$100", "$125", "$150", "$175"])
     ax.set_ylim(0, 3.0)
     ax.set_yticks([0, 1, 2, 3], ["0%", "1%", "2%", "3%"])
-    ax.set_xlabel("Input tokens per request")
+    ax.set_xlabel("Jev cost per million decisions")
     ax.set_ylabel("Repeats that change the answer")
     ax.legend(loc="lower right")
-    heading(fig, "Each copy costs about 160 tokens", "Changed answers against the input tokens a request bills")
+    heading(fig, "What steadier answers cost",
+            "At Jev's $42 per billion input tokens; output tokens are free")
     save(fig, "jev-pooled-cost.png")
 
 
