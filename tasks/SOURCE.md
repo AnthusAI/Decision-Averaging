@@ -4,3 +4,5 @@ wording and option order, so results here line up item for item with Hard-Decisi
 
 ProofWriter: Tafjord, O., Dalvi, B. & Clark, P. (2021), "ProofWriter: Generating Implications, Proofs, and Abductive
 Statements over Natural Language," *Findings of ACL 2021*. Dataset from the Allen Institute for AI.
+License: CC BY (Creative Commons Attribution), as stated on the dataset page, https://allenai.org/data/proofwriter.
+The items here are redistributed under that license with the attribution above.
