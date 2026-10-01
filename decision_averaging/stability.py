@@ -7,7 +7,8 @@ this scores, per arm and pooling rule:
 - ``agreement`` and ``ac1``: Gwet's multi-rater percent agreement and AC1 across all runs (Gwet 2008), with a
   95% percentile bootstrap interval over items (seed 0, 1,000 resamples).
 - ``changed``: items whose pooled answer is not the same in every run; ``pair_flip_rate``: the share of run
-  pairs that disagree, averaged over items.
+  pairs that disagree, averaged over items (the chance that a repeated request changes the answer), with a 95%
+  bootstrap interval.
 - ``probability_sd``: per item, the standard deviation across runs of the pooled probability of the item's
   most common answer, averaged over items.
 - accuracy (mean over runs), input tokens and latency per request.
@@ -108,6 +109,7 @@ def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
             flips = [sum(a != b for a, b in itertools.combinations(r, 2)) / (len(r) * (len(r) - 1) / 2)
                      for r in ratings]
             flip_items[(arm, rule)] = flips
+            flip_boot = [sum(flips[j] for j in draw) / len(draw) for draw in draws]
             sds = []
             for i, r in zip(common, ratings):
                 modal = Counter(r).most_common(1)[0][0]
@@ -120,7 +122,8 @@ def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
             row = {"kind": "stability", "task": task.slug, "arm": arm, "k": arm_k(arm), "rule": rule,
                    "runs": sorted(runs), "n": len(common), **whole, "ac1_low": _interval(boot)[0],
                    "ac1_high": _interval(boot)[1], "changed": sum(changed),
-                   "pair_flip_rate": statistics.mean(flips),
+                   "pair_flip_rate": statistics.mean(flips), "pair_flip_rate_low": _interval(flip_boot)[0],
+                   "pair_flip_rate_high": _interval(flip_boot)[1],
                    "probability_sd": statistics.mean(sds) if sds else None, "accuracy": accuracy}
             if near_tie is not None and sum(changed):
                 row["changed_near_tie_share"] = sum(c and near_tie[i] for c, i in zip(changed, common)) / sum(changed)

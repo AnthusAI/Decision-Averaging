@@ -1,9 +1,10 @@
-"""Draw the study 3 figures into docs/figures/ from the committed records (offline, deterministic).
+"""Draw the study 3 figures into docs/figures/ from the committed records (offline, deterministic). The anth.us
+article versions come from scripts/blog_figures.py.
 
     python scripts/figures.py
 
-1. stability-vs-k.png: fewer run-to-run flips than k = 1 (relative reduction in pair flip rate) against k, both
-   tasks, paired 95% intervals (from studies/*-stability.jsonl).
+1. stability-vs-k.png: the chance that a repeated request changes the pooled answer (pair flip rate) against k,
+   both tasks, 95% intervals (from studies/*-stability.jsonl).
 2. stability-vs-tokens.png: pair flip rate against input tokens per request.
 3. copies-within-request.png: every copy's probability for its answer inside one k = 20 request, for stable and
    unstable OWA items.
@@ -75,21 +76,20 @@ def stability_vs_k():
     fig, ax = plt.subplots(figsize=(6.4, 3.8))
     positions = {k: i for i, k in enumerate(KS)}
     for task, (label, _) in TASKS.items():
-        rows = {int(r["arm"].rsplit("k", 1)[1]): r for r in stability_rows(task)
-                if r["kind"] == "stability_paired" and r["rule"] == "mean"}
-        ks = [1] + [k for k in KS if k in rows]
+        rows = {r["k"]: r for r in stability_rows(task) if r["kind"] == "stability" and r["rule"] == "mean"}
+        ks = [k for k in KS if k in rows]
         x = [positions[k] + (-0.06 if label == "OWA" else 0.06) for k in ks]
-        y = [0.0] + [100 * rows[k]["flip_reduction"] for k in ks[1:]]
-        err = [[0.0] + [100 * (rows[k]["flip_reduction"] - rows[k]["flip_reduction_low"]) for k in ks[1:]],
-               [0.0] + [100 * (rows[k]["flip_reduction_high"] - rows[k]["flip_reduction"]) for k in ks[1:]]]
+        y = [100 * rows[k]["pair_flip_rate"] for k in ks]
+        err = [[100 * (rows[k]["pair_flip_rate"] - rows[k]["pair_flip_rate_low"]) for k in ks],
+               [100 * (rows[k]["pair_flip_rate_high"] - rows[k]["pair_flip_rate"]) for k in ks]]
         ax.errorbar(x, y, yerr=err, color=SERIES[label], lw=2, marker="o", ms=7, capsize=0, elinewidth=1.2,
                     mec=SURFACE, mew=2, label=label)
-    ax.axhline(0, color=INK_2, lw=1)
     ax.set_xticks(range(len(KS)), [str(k) for k in KS])
+    ax.set_ylim(bottom=0)
     ax.set_xlabel("copies of the question in one request (k)")
-    ax.set_ylabel("fewer run-to-run flips than k = 1 (%)")
-    ax.set_title("Pooled copies flip less, up to about ten")
-    ax.legend(loc="upper left")
+    ax.set_ylabel("repeated requests that change the answer (%)")
+    ax.set_title("More copies, fewer changed answers, up to about ten")
+    ax.legend(loc="lower left")
     save(fig, "stability-vs-k.png")
 
 

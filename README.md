@@ -20,7 +20,7 @@ This project measures whether it pays.
   (OWA 29% [9, 47], CWA 37% [16, 57]) for 3.8× the input tokens. Twenty copies did no better: about half of the
   run-to-run noise is shared by every copy in a request, so averaging cannot remove it.
 
-![Fewer flips than one copy, by k](docs/figures/stability-vs-k.png)
+![How often a repeated request changes the answer, by k](docs/figures/stability-vs-k.png)
 
 ## Design
 

@@ -24,7 +24,10 @@ when the same request is sent again (study 3):
 run-to-run flips by about a third on both tasks, and it is the only k whose interval excludes zero on both.
 Twenty copies did no better than ten.
 
-![Fewer flips than one copy, by k](figures/stability-vs-k.png)
+![How often a repeated request changes the answer, by k](figures/stability-vs-k.png)
+
+Each point's interval reflects how much that rate varies on its own; the comparison with k = 1 in the table is
+tighter because it is made item by item.
 
 ## Noise, not bias
 
