@@ -13,7 +13,12 @@ print(' '.join(f'{k}:{t}' for k, t in cells))")
   for cell in $cells; do
     k=${cell%%:*}; task=${cell#*:}
     if [[ "${1:-}" == "--confirm" ]]; then
-      da answer "$k" "$task" --run "$run" --confirm --max-requests 1800
+      # Retry a cell's failed items by rerunning it (it skips answered ids) before moving on.
+      for attempt in 1 2 3; do
+        da answer "$k" "$task" --run "$run" --confirm --max-requests 1800 && break
+        [[ $attempt == 3 ]] && exit 1
+        sleep 10
+      done
     else
       da answer "$k" "$task" --run "$run" | sed -n 1,2p
     fi

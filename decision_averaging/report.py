@@ -97,16 +97,21 @@ def stability_section(slug: str, rows: List[dict]) -> List[str]:
         return []
     cost = {r["arm"]: r for r in rows if r["kind"] == "stability_cost"}
     paired = {r["arm"]: r for r in rows if r["kind"] == "stability_paired"}
-    lines = [f"### Stability across runs {main[0]['runs'][0]}-{main[0]['runs'][-1]} (study 3, `mean` rule, "
+    lines = [f"### Repeatability across runs {main[0]['runs'][0]}-{main[0]['runs'][-1]} (study 3, `mean` rule, "
              f"{main[0]['n']} items)", "",
-             "| k | AC1 (95% interval) | AC1 vs k = 1 | agreement | items changed | pair flip rate | "
+             "Pair flip rate: the share of run pairs whose pooled answers differ, averaged over items. Reduction is "
+             "relative to k = 1 on the same items, with a paired 95% bootstrap interval.", "",
+             "| k | pair flip rate | fewer flips than k = 1 | items changed | AC1 (95% interval) | AC1 vs k = 1 | "
              "probability SD | accuracy | input tokens |", "|---|---|---|---|---|---|---|---|---|"]
     for r in main:
         p = paired.get(r["arm"])
         versus = "-" if p is None else f"{p['ac1_diff']:+.3f} [{p['ci_low']:+.3f}, {p['ci_high']:+.3f}]"
+        fewer = "-" if p is None or p.get("flip_reduction") is None else (
+            f"{100 * p['flip_reduction']:.0f}% [{100 * p['flip_reduction_low']:.0f}, "
+            f"{100 * p['flip_reduction_high']:.0f}]")
         tokens = cost.get(r["arm"], {}).get("input_tokens_mean")
-        lines.append(f"| {r['k']} | {r['ac1']:.3f} [{r['ac1_low']:.3f}-{r['ac1_high']:.3f}] | {versus} | "
-                     f"{_pct(r['agreement'])} | {r['changed']} | {_pct(r['pair_flip_rate'])} | "
+        lines.append(f"| {r['k']} | {100 * r['pair_flip_rate']:.2f}% | {fewer} | {r['changed']} | "
+                     f"{r['ac1']:.3f} [{r['ac1_low']:.3f}-{r['ac1_high']:.3f}] | {versus} | "
                      f"{'-' if r['probability_sd'] is None else format(r['probability_sd'], '.3f')} | "
                      f"{_pct(r['accuracy'])} | {'-' if tokens is None else format(tokens, '.0f')} |")
     return lines + [""]

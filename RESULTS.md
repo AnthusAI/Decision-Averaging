@@ -113,6 +113,19 @@ Pairwise disagreement: share of slot pairs in one request with different answers
 | jev-perm3 | 1 | 911 | 176 | 212 |
 | jev-para3 | 1 | 872 | 173 | 211 |
 
+### Repeatability across runs 3-7 (study 3, `mean` rule, 1000 items)
+
+Pair flip rate: the share of run pairs whose pooled answers differ, averaged over items. Reduction is relative to k = 1 on the same items, with a paired 95% bootstrap interval.
+
+| k | pair flip rate | fewer flips than k = 1 | items changed | AC1 (95% interval) | AC1 vs k = 1 | probability SD | accuracy | input tokens |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2.47% | - | 51 | 0.963 [0.952-0.972] | - | 0.017 | 85.0 | 560 |
+| 2 | 2.24% | 9% [-16, 30] | 46 | 0.966 [0.956-0.976] | +0.003 [-0.005, +0.012] | 0.015 | 84.7 | 735 |
+| 3 | 2.03% | 18% [-5, 38] | 42 | 0.970 [0.959-0.979] | +0.007 [-0.002, +0.015] | 0.014 | 84.6 | 910 |
+| 5 | 2.16% | 13% [-11, 32] | 45 | 0.968 [0.958-0.977] | +0.005 [-0.004, +0.013] | 0.014 | 85.2 | 1260 |
+| 10 | 1.76% | 29% [9, 47] | 37 | 0.974 [0.965-0.982] | +0.011 [+0.003, +0.019] | 0.013 | 85.0 | 2135 |
+| 20 | 1.99% | 19% [-5, 39] | 40 | 0.970 [0.961-0.979] | +0.007 [-0.002, +0.016] | 0.012 | 84.9 | 3885 |
+
 ## proofwriter-cwa
 
 ### Accuracy (95% bootstrap interval)
@@ -209,6 +222,19 @@ Pairwise disagreement: share of slot pairs in one request with different answers
 | jev-k5 | 2 | 1131 | 173 | 208 |
 | jev-k10 | 1 | 1876 | 177 | 216 |
 | jev-k10 | 2 | 1876 | 182 | 225 |
+
+### Repeatability across runs 3-7 (study 3, `mean` rule, 1000 items)
+
+Pair flip rate: the share of run pairs whose pooled answers differ, averaged over items. Reduction is relative to k = 1 on the same items, with a paired 95% bootstrap interval.
+
+| k | pair flip rate | fewer flips than k = 1 | items changed | AC1 (95% interval) | AC1 vs k = 1 | probability SD | accuracy | input tokens |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 1.98% | - | 41 | 0.960 [0.948-0.972] | - | 0.014 | 89.5 | 535 |
+| 2 | 1.62% | 18% [-7, 42] | 32 | 0.968 [0.956-0.979] | +0.007 [-0.003, +0.017] | 0.013 | 89.3 | 684 |
+| 3 | 1.56% | 21% [-6, 43] | 33 | 0.969 [0.958-0.979] | +0.008 [-0.002, +0.019] | 0.012 | 89.4 | 833 |
+| 5 | 1.38% | 30% [3, 51] | 27 | 0.972 [0.962-0.982] | +0.012 [+0.001, +0.024] | 0.012 | 89.5 | 1131 |
+| 10 | 1.24% | 37% [16, 57] | 25 | 0.975 [0.966-0.985] | +0.015 [+0.005, +0.026] | 0.011 | 89.6 | 1876 |
+| 20 | 1.42% | 28% [7, 48] | 29 | 0.972 [0.960-0.982] | +0.011 [+0.002, +0.020] | 0.011 | 89.5 | 3366 |
 
 ## emotion
 

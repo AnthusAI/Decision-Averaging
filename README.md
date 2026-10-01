@@ -10,20 +10,17 @@ This project measures whether it pays.
 
 ## Result
 
-**No, for accuracy. Yes, a little, for repeatability.** Two preregistered studies, about 40,000 requests, under
-$2 of Jev. Write-up with every prediction scored: [`docs/findings.md`](docs/findings.md).
+**Pooling does not make Jev more accurate. It does make it more repeatable.** Three preregistered studies, about
+100,000 requests, $5.50 of Jev. Write-up with figures and every prediction scored:
+[`docs/findings.md`](docs/findings.md).
 
-| task | one classification | 3 identical | 3 option orders | 3 wordings |
-|---|---|---|---|---|
-| ProofWriter OWA (1,800) | 84.2% | 84.5% | 84.6% | 84.9% |
-| ProofWriter CWA (1,800) | 90.1% | 89.5% | | |
-| Emotion (2,000) | 59.2% | 59.0% | 59.1% | 58.9% |
+- **Accuracy (studies 1-2):** no pooled arm differs from one classification by more than 1 point, on ProofWriter
+  or Emotion, with identical, reordered or reworded copies. Jev's mistakes are made by every copy.
+- **Repeatability (study 3):** ten copies in one request cut run-to-run answer flips by about a third
+  (OWA 29% [9, 47], CWA 37% [16, 57]) for 3.8× the input tokens. Twenty copies did no better: about half of the
+  run-to-run noise is shared by every copy in a request, so averaging cannot remove it.
 
-Run 1, `mean` rule (average the probabilities, take the top option). No pooled arm differs from one
-classification by more than 1 point on any task or run, with up to ten copies. Jev's mistakes are made by every
-copy: copies disagree on 1.8–5.6% of items while 10–41% of answers are wrong, so even a rule that always picked
-a right copy would gain at most 2.6 points. Pooling ten copies did halve how often the answer changes between
-two runs (OWA: 28 items of 1,800 against 52).
+![Fewer flips than one copy, by k](docs/figures/stability-vs-k.png)
 
 ## Design
 
@@ -71,6 +68,11 @@ writes the text to a gitignored `tasks/emotion/texts.jsonl` before answering.
 - Study 1 run 2 was stopped at 1,162 of 1,800 `jev-k10` OWA items and resumed later, so that manifest has more
   than one line.
 - Study 2 withdrew a three-separate-requests arm before any arm answered (see its amendment).
+- Study 3 was interrupted twice, with no effect on the order or the items. Its first attempt failed on 10
+  requests before any answer because no Jev key was available after the harness was vendored (the
+  `jev-k2/run3/proofwriter-owa` manifest's first line records 0 answered). Later the account ran out of credits
+  partway through run 3's twelfth cell (`jev-k5`, OWA, 329 of 1,000 answered); after credits were added the same
+  script resumed where it stopped.
 - Before publishing, history was rewritten to remove Emotion text from earlier commits. Run manifests that name
   commit `bd2b213` refer to what is now `112aa87` (same code); `0139dd1` is unchanged. Preregistration 2 was
   frozen in `8b769b8`, before any of its arms answered.
@@ -83,7 +85,7 @@ decision_averaging/harness/  task loading, answer runner, records, metrics, AC1:
 tasks/                       ProofWriter samples and Emotion ids and labels
 answers/<arm>/run<r>/<task>.jsonl.gz   committed records; <task>.runs.jsonl beside each is the run manifest
 studies/<task>.jsonl         scored rows; RESULTS.md is generated from them
-docs/                        preregistrations, prior art, findings
+docs/                        preregistrations, prior art, findings, figures (scripts/figures.py)
 ```
 
 Model `jev-1.13.0`, recorded per row. Results describe Jev as served on 2026-10-01.

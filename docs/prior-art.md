@@ -50,6 +50,24 @@ The closest human analogy to identical copies in one request.
   Plain re-asking gained 0.3 points; asking people to assume their first answer was wrong gained 4.1; a second
   person gained 7.1. Gains come from prompts that draw on different information.
 
+## Noise in judgment
+
+- Kahneman, D., Sibony, O. & Sunstein, C.R. (2021), *Noise: A Flaw in Human Judgment* (Little, Brown Spark).
+  Separates bias (systematic error) from noise (unwanted variability in judgments that should be identical),
+  including occasion noise: the same judge giving different answers to the same case at different moments. The
+  remedy it recommends is aggregating independent judgments. Its error equation (error = bias² + noise²) is for
+  continuous judgments; for a yes/no decision near its threshold, less noise need not mean fewer errors.
+- Kahneman, D. (2011), *Thinking, Fast and Slow* (Farrar, Straus and Giroux). The source of the System 1 /
+  System 2 framing that Jev's "System One" name borrows; argues that multiple sources of evidence are only as
+  useful as they are independent.
+- Creel, K. & Hellman, D. (2022), "The Algorithmic Leviathan," *Canadian Journal of Philosophy* 52(1),
+  doi:10.1017/can.2022.3. Systematic, repeatable error concentrates harm on the same people; random error spreads
+  it.
+- Cooper, A.F. et al. (2024), "Arbitrariness and Social Prediction," *AAAI 2024*, arXiv 2301.11562. Variance
+  across runs makes individual predictions arbitrary; recommends abstaining on high-variance cases.
+- Repeatability as a term: JCGM 200:2012 (VIM) §2.21 (same procedure, system and conditions, short interval) as
+  distinct from reproducibility (§2.25, changed conditions).
+
 ## Repeated LLM sampling
 
 - Wang, X. et al. (2023), "Self-consistency improves chain of thought reasoning in language models,"

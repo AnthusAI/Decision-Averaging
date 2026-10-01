@@ -12,7 +12,8 @@ this scores, per arm and pooling rule:
   most common answer, averaged over items.
 - accuracy (mean over runs), input tokens and latency per request.
 
-``paired`` rows give each arm's AC1 minus ``jev-k1``'s on the same bootstrap resamples of the same items.
+``paired`` rows give each arm's AC1 minus ``jev-k1``'s, and its pair flip rate as a relative reduction from
+``jev-k1``'s (1 - arm / k1), on the same bootstrap resamples of the same items.
 Rows go to ``studies/<task>-stability.jsonl``.
 """
 from __future__ import annotations
@@ -94,6 +95,7 @@ def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
         near_tie = {i: (m := _margin(first[i])) is not None and m < NEAR_TIE for i in common}
     out: List[dict] = []
     per_item: Dict[tuple, List[float]] = {}
+    flip_items: Dict[tuple, List[float]] = {}
 
     for arm in sorted(records, key=arm_order):
         runs = records[arm]
@@ -105,6 +107,7 @@ def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
             changed = [len(set(r)) > 1 for r in ratings]
             flips = [sum(a != b for a, b in itertools.combinations(r, 2)) / (len(r) * (len(r) - 1) / 2)
                      for r in ratings]
+            flip_items[(arm, rule)] = flips
             sds = []
             for i, r in zip(common, ratings):
                 modal = Counter(r).most_common(1)[0][0]
@@ -140,8 +143,14 @@ def analyse(task: Task, *, root: Path = ROOT) -> List[dict]:
                              and r["rule"] == rule) - next(r["ac1"] for r in out if r["kind"] == "stability"
                                                            and r["arm"] == baseline and r["rule"] == rule)
                 low, high = _interval(diffs)
+                mine, base = flip_items[(arm, rule)], flip_items[(baseline, rule)]
+                reduction = [1 - sum(mine[j] for j in draw) / sum(base[j] for j in draw)
+                             for draw in draws if sum(base[j] for j in draw)]
                 out.append({"kind": "stability_paired", "task": task.slug, "arm": arm, "versus": baseline,
-                            "rule": rule, "n": len(common), "ac1_diff": point, "ci_low": low, "ci_high": high})
+                            "rule": rule, "n": len(common), "ac1_diff": point, "ci_low": low, "ci_high": high,
+                            "flip_reduction": 1 - sum(mine) / sum(base) if sum(base) else None,
+                            "flip_reduction_low": _interval(reduction)[0] if reduction else None,
+                            "flip_reduction_high": _interval(reduction)[1] if reduction else None})
     return out
 
 
